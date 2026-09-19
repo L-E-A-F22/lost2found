@@ -539,12 +539,17 @@ $('modalClose').onclick = closeModal;
 $('backdrop').addEventListener('click', function (e) { if (e.target === $('backdrop')) closeModal(); });
 document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeModal(); });
 
+var bridgeFrame = null;
+var bridgeReady = false;
+var bridgeSeq = 0;
+var bridgePending = {};
+var bridgeLoadPromise = null;
+
 function rpc(action, payload) {
   payload = payload || {};
   if (state.token) payload.token = state.token;
 
-  /* Opened directly from the Apps Script /exec URL: use the fast, built-in
-     bridge. This still works if you ever host Index.html from Apps Script. */
+  /* Apps Script-hosted version: use google.script.run directly. */
   if (typeof google !== 'undefined' && google.script && google.script.run) {
     return new Promise(function (resolve, reject) {
       google.script.run
@@ -556,26 +561,101 @@ function rpc(action, payload) {
     });
   }
 
-  /* Hosted elsewhere, e.g. Vercel: call the script as a plain JSON API.
-     text/plain keeps this a "simple request" so the browser sends it
-     straight through — Apps Script has no OPTIONS handler, so a preflight
-     would fail. Don't add custom headers here. */
-  return fetch(APPS_SCRIPT_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify({ action: action, payload: payload })
-  })
-    .catch(function () {
-      throw new Error('Could not reach the server. Check your connection and the script URL.');
-    })
-    .then(function (r) {
-      if (!r.ok) throw new Error('Server error (' + r.status + ').');
-      return r.json();
-    })
-    .then(function (res) {
-      return new Promise(function (resolve, reject) { settleRpc(res, resolve, reject); });
-    });
+  /* External hosting (Vercel/localhost): use an Apps Script iframe bridge.
+     This avoids the browser CORS restriction on script.google.com while still
+     supporting large JSON payloads such as compressed item photos. */
+  return rpcThroughBridge_(action, payload);
 }
+
+function rpcThroughBridge_(action, payload) {
+  return ensureBridge_().then(function () {
+    return new Promise(function (resolve, reject) {
+      var id = 'rpc_' + (++bridgeSeq) + '_' + Date.now();
+      bridgePending[id] = { resolve: resolve, reject: reject };
+
+      try {
+        bridgeFrame.contentWindow.postMessage({
+          source: 'l2f-client',
+          id: id,
+          action: action,
+          payload: payload
+        }, bridgeTargetOrigin_());
+      } catch (err) {
+        delete bridgePending[id];
+        reject(new Error('Could not contact the Lost2Found server.'));
+      }
+
+      setTimeout(function () {
+        if (!bridgePending[id]) return;
+        delete bridgePending[id];
+        reject(new Error('The server took too long to respond. Please try again.'));
+      }, 20000);
+    });
+  });
+}
+
+function bridgeTargetOrigin_() {
+  try {
+    return window.location.origin && window.location.origin !== 'null'
+      ? window.location.origin
+      : '*';
+  } catch (e) {
+    return '*';
+  }
+}
+
+function ensureBridge_() {
+  if (bridgeFrame && bridgeReady) return Promise.resolve();
+  if (bridgeLoadPromise) return bridgeLoadPromise;
+
+  bridgeLoadPromise = new Promise(function (resolve, reject) {
+    bridgeFrame = document.createElement('iframe');
+    bridgeFrame.setAttribute('title', 'Lost2Found server bridge');
+    bridgeFrame.setAttribute('aria-hidden', 'true');
+    bridgeFrame.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;border:0;opacity:0;pointer-events:none;';
+
+    var timer = setTimeout(function () {
+      if (!bridgeReady) {
+        bridgeLoadPromise = null;
+        reject(new Error('Could not load the Lost2Found server. Check that the Apps Script Web App is deployed for anyone with the link.'));
+      }
+    }, 15000);
+
+    bridgeFrame.onload = function () {
+      clearTimeout(timer);
+      bridgeReady = true;
+      resolve();
+    };
+
+    bridgeFrame.onerror = function () {
+      clearTimeout(timer);
+      bridgeLoadPromise = null;
+      reject(new Error('Could not load the Lost2Found server.'));
+    };
+
+    var target = bridgeTargetOrigin_();
+    bridgeFrame.src = APPS_SCRIPT_URL + '?bridge=1&origin=' + encodeURIComponent(target);
+    document.body.appendChild(bridgeFrame);
+  });
+
+  return bridgeLoadPromise;
+}
+
+window.addEventListener('message', function (event) {
+  if (!bridgeFrame || event.source !== bridgeFrame.contentWindow) return;
+  var msg = event.data || {};
+  if (msg.source !== 'l2f-bridge' || !msg.id) return;
+
+  var pending = bridgePending[msg.id];
+  if (!pending) return;
+  delete bridgePending[msg.id];
+
+  if (msg.result) {
+    settleRpc(msg.result, pending.resolve, pending.reject);
+  } else {
+    pending.reject(new Error(msg.error || 'Server error.'));
+  }
+});
 
 function settleRpc(res, resolve, reject) {
   if (!res) return reject(new Error('No response from the server.'));
