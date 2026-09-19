@@ -216,6 +216,15 @@ h3{font-size:15px;font-weight:700}
   border-radius:3px;background:var(--primary-soft);border:1px solid #bcd0fb;
 }
 .otp-panel{border:1px solid var(--border);background:var(--surface-soft);border-radius:var(--radius-sm);padding:14px;margin-bottom:14px}
+.otp-input{
+  max-width:180px;
+  text-align:center;
+  letter-spacing:5px;
+  font-weight:800;
+  font-size:18px;
+  font-variant-numeric:tabular-nums;
+}
+
 .verified{
   display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;
   color:var(--green);background:var(--green-soft);border-radius:9px;padding:8px 12px;margin-bottom:14px;
@@ -405,14 +414,16 @@ h3{font-size:15px;font-weight:700}
           </div>
 
           <div id="otpBox" class="otp-panel hidden">
-            <label class="label" for="otpInput">Code from your inbox</label>
+            <div style="font-weight:750;font-size:13px;margin-bottom:4px">Enter the 6-digit code</div>
+            <div class="hint" id="otpSentFrom" style="margin-bottom:10px">A verification code was sent to your email.</div>
+            <label class="label" for="otpInput">Verification code</label>
             <div class="row">
-              <input id="otpInput" class="input" inputmode="numeric" maxlength="6" placeholder="6 digits" autocomplete="one-time-code">
-              <button class="btn btn-soft" type="button" id="otpVerify">Confirm</button>
+              <input id="otpInput" class="input otp-input" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="000000" autocomplete="one-time-code" aria-label="6-digit email verification code">
+              <button class="btn btn-soft" type="button" id="otpVerify">Verify OTP</button>
             </div>
-            <div class="hint" id="otpHint"></div>
+            <div class="hint" id="otpHint">The code is temporary and expires in 5 minutes.</div>
           </div>
-          <div id="otpDone" class="verified hidden">Email confirmed</div>
+          <div id="otpDone" class="verified hidden">✓ Email verified successfully</div>
 
           <div class="field">
             <label class="label" for="regUser">Username</label>
@@ -562,8 +573,7 @@ function rpc(action, payload) {
   }
 
   /* External hosting (Vercel/localhost): use an Apps Script iframe bridge.
-     This avoids the browser CORS restriction on script.google.com while still
-     supporting large JSON payloads such as compressed item photos. */
+     This avoids browser CORS restrictions on script.google.com. */
   return rpcThroughBridge_(action, payload);
 }
 
@@ -579,17 +589,22 @@ function rpcThroughBridge_(action, payload) {
           id: id,
           action: action,
           payload: payload
-        }, bridgeTargetOrigin_());
+        }, '*');
       } catch (err) {
         delete bridgePending[id];
         reject(new Error('Could not contact the Lost2Found server.'));
+        return;
       }
 
+      // Apps Script may take longer on a cold start or during MailApp/Drive work.
       setTimeout(function () {
         if (!bridgePending[id]) return;
         delete bridgePending[id];
-        reject(new Error('The server took too long to respond. Please try again.'));
-      }, 20000);
+        reject(new Error(
+          'Google Apps Script is taking too long to respond. ' +
+          'If this is the first run, open Apps Script and run authorizeServices() once, then deploy the latest version.'
+        ));
+      }, 90000);
     });
   });
 }
@@ -634,7 +649,7 @@ function ensureBridge_() {
     };
 
     var target = bridgeTargetOrigin_();
-    bridgeFrame.src = APPS_SCRIPT_URL + '?bridge=1&origin=' + encodeURIComponent(target);
+    bridgeFrame.src = APPS_SCRIPT_URL + '?bridge=1';
     document.body.appendChild(bridgeFrame);
   });
 
@@ -732,7 +747,8 @@ $('otpSend').onclick = function () {
       $('otpDone').classList.add('hidden');
       state.verifyToken = null;
       $('otpHint').className = 'hint';
-      $('otpHint').textContent = 'Sent to ' + d.maskedEmail + '. Valid for ' + d.ttlMinutes + ' minutes.';
+      $('otpHint').textContent = 'The code is temporary and expires in ' + d.ttlMinutes + ' minutes.';
+      $('otpSentFrom').textContent = 'Code sent to ' + d.maskedEmail + ' from ' + (d.senderEmail || 'Lost2Found Campus') + '.';
       $('otpInput').focus();
       countdown(btn, 45, 'Send code');
     })
@@ -752,9 +768,16 @@ function countdown(btn, secs, label) {
 }
 
 $('otpVerify').onclick = function () {
+  var code = $('otpInput').value.trim();
+  if (!/^\d{6}$/.test(code)) {
+    $('otpHint').className = 'hint bad';
+    $('otpHint').textContent = 'Enter the 6-digit OTP from your email.';
+    $('otpInput').focus();
+    return;
+  }
   var btn = $('otpVerify');
   busy(btn, true);
-  rpc('verifyEmailOtp', { email: $('regEmail').value.trim(), code: $('otpInput').value.trim() })
+  rpc('verifyEmailOtp', { email: $('regEmail').value.trim(), code: code })
     .then(function (d) {
       state.verifyToken = d.verifyToken;
       $('otpBox').classList.add('hidden');
@@ -767,6 +790,14 @@ $('otpVerify').onclick = function () {
     })
     .then(function () { busy(btn, false); });
 };
+
+$('regEmail').addEventListener('input', function () {
+  state.verifyToken = null;
+  $('otpBox').classList.add('hidden');
+  $('otpDone').classList.add('hidden');
+  $('otpInput').value = '';
+  $('otpHint').textContent = 'The code is temporary and expires in 5 minutes.';
+});
 
 var userTimer = null;
 $('regUser').addEventListener('input', function () {
