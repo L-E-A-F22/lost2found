@@ -215,16 +215,6 @@ h3{font-size:15px;font-weight:700}
   content:"";position:absolute;left:0;top:7px;width:8px;height:8px;
   border-radius:3px;background:var(--primary-soft);border:1px solid #bcd0fb;
 }
-.otp-panel{border:1px solid var(--border);background:var(--surface-soft);border-radius:var(--radius-sm);padding:14px;margin-bottom:14px}
-.otp-input{
-  max-width:180px;
-  text-align:center;
-  letter-spacing:5px;
-  font-weight:800;
-  font-size:18px;
-  font-variant-numeric:tabular-nums;
-}
-
 .verified{
   display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;
   color:var(--green);background:var(--green-soft);border-radius:9px;padding:8px 12px;margin-bottom:14px;
@@ -363,7 +353,7 @@ h3{font-size:15px;font-weight:700}
       <div class="promise">
         <h3>What happens to your details</h3>
         <ul>
-          <li>Your email confirms you are a real student. Only you see it.</li>
+          <li>Your email is stored privately and is never shown to other students.</li>
           <li>Your phone number stays in your account and is never shown to other users.</li>
           <li>Your password is stored as a salted hash, so nobody can read it back.</li>
           <li>Other students see your username, your name, and what you posted.</li>
@@ -396,7 +386,7 @@ h3{font-size:15px;font-weight:700}
 
         <form id="registerForm" class="hidden">
           <h2>Create your account</h2>
-          <p class="section-copy" style="margin-bottom:20px">Confirm your email, pick a username, set a password.</p>
+          <p class="section-copy" style="margin-bottom:20px">Use your college email, pick a username, and set a password.</p>
           <div id="regError" class="alert hidden"></div>
 
           <div class="field">
@@ -406,24 +396,10 @@ h3{font-size:15px;font-weight:700}
 
           <div class="field">
             <label class="label" for="regEmail">Email</label>
-            <div class="row">
-              <input id="regEmail" class="input" type="email" autocomplete="email" placeholder="you@college.edu" required>
-              <button class="btn btn-secondary" type="button" id="otpSend">Send code</button>
-            </div>
-            <div class="hint">We send a 6-digit code to check the address works.</div>
+            <input id="regEmail" class="input" type="email" autocomplete="email"
+              placeholder="you@college.edu" required>
+            <div class="hint">Your email is required for your account and remains private.</div>
           </div>
-
-          <div id="otpBox" class="otp-panel hidden">
-            <div style="font-weight:750;font-size:13px;margin-bottom:4px">Enter the 6-digit code</div>
-            <div class="hint" id="otpSentFrom" style="margin-bottom:10px">A verification code was sent to your email.</div>
-            <label class="label" for="otpInput">Verification code</label>
-            <div class="row">
-              <input id="otpInput" class="input otp-input" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="000000" autocomplete="one-time-code" aria-label="6-digit email verification code">
-              <button class="btn btn-soft" type="button" id="otpVerify">Verify OTP</button>
-            </div>
-            <div class="hint" id="otpHint">The code is temporary and expires in 5 minutes.</div>
-          </div>
-          <div id="otpDone" class="verified hidden">✓ Email verified successfully</div>
 
           <div class="field">
             <label class="label" for="regUser">Username</label>
@@ -499,7 +475,7 @@ h3{font-size:15px;font-weight:700}
    Helpers
    ============================================================ */
 var $ = function (id) { return document.getElementById(id); };
-var state = { token: null, me: null, route: 'home', verifyToken: null, thread: null, photo: null };
+var state = { token: null, me: null, route: 'home', thread: null, photo: null };
 var SPIN = '<div class="loading"><span class="spinner load-dot"></span></div>';
 
 /* Your Apps Script web app's /exec URL. Deployment must have
@@ -550,17 +526,12 @@ $('modalClose').onclick = closeModal;
 $('backdrop').addEventListener('click', function (e) { if (e.target === $('backdrop')) closeModal(); });
 document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeModal(); });
 
-var bridgeFrame = null;
-var bridgeReady = false;
-var bridgeSeq = 0;
-var bridgePending = {};
-var bridgeLoadPromise = null;
-
 function rpc(action, payload) {
   payload = payload || {};
   if (state.token) payload.token = state.token;
 
-  /* Apps Script-hosted version: use google.script.run directly. */
+  /* Opened directly from the Apps Script /exec URL: use the fast, built-in
+     bridge. This still works if you ever host Index.html from Apps Script. */
   if (typeof google !== 'undefined' && google.script && google.script.run) {
     return new Promise(function (resolve, reject) {
       google.script.run
@@ -572,105 +543,26 @@ function rpc(action, payload) {
     });
   }
 
-  /* External hosting (Vercel/localhost): use an Apps Script iframe bridge.
-     This avoids browser CORS restrictions on script.google.com. */
-  return rpcThroughBridge_(action, payload);
-}
-
-function rpcThroughBridge_(action, payload) {
-  return ensureBridge_().then(function () {
-    return new Promise(function (resolve, reject) {
-      var id = 'rpc_' + (++bridgeSeq) + '_' + Date.now();
-      bridgePending[id] = { resolve: resolve, reject: reject };
-
-      try {
-        bridgeFrame.contentWindow.postMessage({
-          source: 'l2f-client',
-          id: id,
-          action: action,
-          payload: payload
-        }, '*');
-      } catch (err) {
-        delete bridgePending[id];
-        reject(new Error('Could not contact the Lost2Found server.'));
-        return;
-      }
-
-      // Apps Script may take longer on a cold start or during MailApp/Drive work.
-      setTimeout(function () {
-        if (!bridgePending[id]) return;
-        delete bridgePending[id];
-        reject(new Error(
-          'Google Apps Script is taking too long to respond. ' +
-          'If this is the first run, open Apps Script and run authorizeServices() once, then deploy the latest version.'
-        ));
-      }, 90000);
+  /* Hosted elsewhere, e.g. Vercel: call the script as a plain JSON API.
+     text/plain keeps this a "simple request" so the browser sends it
+     straight through — Apps Script has no OPTIONS handler, so a preflight
+     would fail. Don't add custom headers here. */
+  return fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action: action, payload: payload })
+  })
+    .catch(function () {
+      throw new Error('Could not reach the server. Check your connection and the script URL.');
+    })
+    .then(function (r) {
+      if (!r.ok) throw new Error('Server error (' + r.status + ').');
+      return r.json();
+    })
+    .then(function (res) {
+      return new Promise(function (resolve, reject) { settleRpc(res, resolve, reject); });
     });
-  });
 }
-
-function bridgeTargetOrigin_() {
-  try {
-    return window.location.origin && window.location.origin !== 'null'
-      ? window.location.origin
-      : '*';
-  } catch (e) {
-    return '*';
-  }
-}
-
-function ensureBridge_() {
-  if (bridgeFrame && bridgeReady) return Promise.resolve();
-  if (bridgeLoadPromise) return bridgeLoadPromise;
-
-  bridgeLoadPromise = new Promise(function (resolve, reject) {
-    bridgeFrame = document.createElement('iframe');
-    bridgeFrame.setAttribute('title', 'Lost2Found server bridge');
-    bridgeFrame.setAttribute('aria-hidden', 'true');
-    bridgeFrame.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;border:0;opacity:0;pointer-events:none;';
-
-    var timer = setTimeout(function () {
-      if (!bridgeReady) {
-        bridgeLoadPromise = null;
-        reject(new Error('Could not load the Lost2Found server. Check that the Apps Script Web App is deployed for anyone with the link.'));
-      }
-    }, 15000);
-
-    bridgeFrame.onload = function () {
-      clearTimeout(timer);
-      bridgeReady = true;
-      resolve();
-    };
-
-    bridgeFrame.onerror = function () {
-      clearTimeout(timer);
-      bridgeLoadPromise = null;
-      reject(new Error('Could not load the Lost2Found server.'));
-    };
-
-    var target = bridgeTargetOrigin_();
-    bridgeFrame.src = APPS_SCRIPT_URL + '?bridge=1';
-    document.body.appendChild(bridgeFrame);
-  });
-
-  return bridgeLoadPromise;
-}
-
-window.addEventListener('message', function (event) {
-  if (!bridgeFrame || event.source !== bridgeFrame.contentWindow) return;
-  var msg = event.data || {};
-  if (msg.source !== 'l2f-bridge' || !msg.id) return;
-
-  var pending = bridgePending[msg.id];
-  if (!pending) return;
-  delete bridgePending[msg.id];
-
-  if (msg.result) {
-    settleRpc(msg.result, pending.resolve, pending.reject);
-  } else {
-    pending.reject(new Error(msg.error || 'Server error.'));
-  }
-});
 
 function settleRpc(res, resolve, reject) {
   if (!res) return reject(new Error('No response from the server.'));
@@ -735,69 +627,6 @@ $('loginForm').addEventListener('submit', function (e) {
     .then(function () { busy(btn, false); });
 });
 
-$('otpSend').onclick = function () {
-  var email = $('regEmail').value.trim();
-  if (!email) return showError($('regError'), 'Enter your email first.');
-  showError($('regError'), '');
-  var btn = $('otpSend');
-  busy(btn, true);
-  rpc('sendEmailOtp', { email: email })
-    .then(function (d) {
-      $('otpBox').classList.remove('hidden');
-      $('otpDone').classList.add('hidden');
-      state.verifyToken = null;
-      $('otpHint').className = 'hint';
-      $('otpHint').textContent = 'The code is temporary and expires in ' + d.ttlMinutes + ' minutes.';
-      $('otpSentFrom').textContent = 'Code sent to ' + d.maskedEmail + ' from ' + (d.senderEmail || 'Lost2Found Campus') + '.';
-      $('otpInput').focus();
-      countdown(btn, 45, 'Send code');
-    })
-    .catch(function (err) { showError($('regError'), err.message); busy(btn, false); });
-};
-
-function countdown(btn, secs, label) {
-  busy(btn, false);
-  btn.disabled = true;
-  var left = secs;
-  btn.textContent = 'Resend ' + left + 's';
-  var t = setInterval(function () {
-    left--;
-    if (left <= 0) { clearInterval(t); btn.disabled = false; btn.textContent = label; }
-    else btn.textContent = 'Resend ' + left + 's';
-  }, 1000);
-}
-
-$('otpVerify').onclick = function () {
-  var code = $('otpInput').value.trim();
-  if (!/^\d{6}$/.test(code)) {
-    $('otpHint').className = 'hint bad';
-    $('otpHint').textContent = 'Enter the 6-digit OTP from your email.';
-    $('otpInput').focus();
-    return;
-  }
-  var btn = $('otpVerify');
-  busy(btn, true);
-  rpc('verifyEmailOtp', { email: $('regEmail').value.trim(), code: code })
-    .then(function (d) {
-      state.verifyToken = d.verifyToken;
-      $('otpBox').classList.add('hidden');
-      $('otpDone').classList.remove('hidden');
-      toast('Email confirmed');
-    })
-    .catch(function (err) {
-      $('otpHint').className = 'hint bad';
-      $('otpHint').textContent = err.message;
-    })
-    .then(function () { busy(btn, false); });
-};
-
-$('regEmail').addEventListener('input', function () {
-  state.verifyToken = null;
-  $('otpBox').classList.add('hidden');
-  $('otpDone').classList.add('hidden');
-  $('otpInput').value = '';
-  $('otpHint').textContent = 'The code is temporary and expires in 5 minutes.';
-});
 
 var userTimer = null;
 $('regUser').addEventListener('input', function () {
@@ -831,28 +660,40 @@ $('regPass2').addEventListener('input', function () {
   h.textContent = a === b ? 'Passwords match.' : 'Passwords do not match yet.';
 });
 
+
 $('registerForm').addEventListener('submit', function (e) {
   e.preventDefault();
+
   showError($('regError'), '');
-  if (!state.verifyToken) {
-    return showError($('regError'), 'Confirm your email with the code before creating the account.');
-  }
+
   var btn = $('regBtn');
   busy(btn, true, 'Creating');
+
   rpc('register', {
-    displayName: $('regName').value, username: $('regUser').value,
-    email: $('regEmail').value, phone: $('regPhone').value,
-    password: $('regPass').value, confirm: $('regPass2').value,
-    verifyToken: state.verifyToken
+    displayName: $('regName').value,
+    username: $('regUser').value,
+    email: $('regEmail').value,
+    phone: $('regPhone').value,
+    password: $('regPass').value,
+    confirm: $('regPass2').value
   })
     .then(function (d) {
-      state.token = d.token; state.me = d.me;
-      try { localStorage.setItem('clf_token', d.token); } catch (err) {}
+      state.token = d.token;
+      state.me = d.me;
+
+      try {
+        localStorage.setItem('clf_token', d.token);
+      } catch (err) {}
+
       enterApp();
       toast('Welcome, @' + d.me.username);
     })
-    .catch(function (err) { showError($('regError'), err.message); })
-    .then(function () { busy(btn, false); });
+    .catch(function (err) {
+      showError($('regError'), err.message);
+    })
+    .then(function () {
+      busy(btn, false);
+    });
 });
 
 /* ============================================================
