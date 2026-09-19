@@ -215,6 +215,16 @@ h3{font-size:15px;font-weight:700}
   content:"";position:absolute;left:0;top:7px;width:8px;height:8px;
   border-radius:3px;background:var(--primary-soft);border:1px solid #bcd0fb;
 }
+.otp-panel{border:1px solid var(--border);background:var(--surface-soft);border-radius:var(--radius-sm);padding:14px;margin-bottom:14px}
+.otp-input{
+  max-width:180px;
+  text-align:center;
+  letter-spacing:5px;
+  font-weight:800;
+  font-size:18px;
+  font-variant-numeric:tabular-nums;
+}
+
 .verified{
   display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;
   color:var(--green);background:var(--green-soft);border-radius:9px;padding:8px 12px;margin-bottom:14px;
@@ -223,13 +233,6 @@ h3{font-size:15px;font-weight:700}
 .alert.info{background:var(--primary-soft);color:#2a64cf;border-color:#cfdffb}
 .switch{text-align:center;margin-top:16px;font-size:12.5px;color:var(--text-2)}
 .linkish{color:var(--primary);font-weight:700;cursor:pointer}
-
-/* ---------- Google account authentication ---------- */
-.google-box{display:flex;justify-content:center;margin:14px 0 16px;min-height:44px}
-.google-note{font-size:11.5px;color:var(--text-3);text-align:center;margin-top:8px}
-.google-status{display:flex;align-items:center;gap:9px;padding:10px 12px;border:1px solid #cdebd9;background:var(--green-soft);color:var(--green);border-radius:10px;font-size:12px;font-weight:700;margin-bottom:14px}
-.google-status::before{content:"✓";width:20px;height:20px;border-radius:50%;display:grid;place-items:center;background:#fff;font-weight:900}
-.auth-disabled{opacity:.65;background:#f5f6f8 !important}
 
 /* ---------- items ---------- */
 .item{
@@ -329,7 +332,6 @@ h3{font-size:15px;font-weight:700}
   *{animation-duration:.001s !important;animation-iteration-count:1 !important;transition-duration:.001s !important}
 }
 </style>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 
@@ -361,7 +363,7 @@ h3{font-size:15px;font-weight:700}
       <div class="promise">
         <h3>What happens to your details</h3>
         <ul>
-          <li>Your email is stored privately and is never shown to other students.</li>
+          <li>Your email confirms you are a real student. Only you see it.</li>
           <li>Your phone number stays in your account and is never shown to other users.</li>
           <li>Your password is stored as a salted hash, so nobody can read it back.</li>
           <li>Other students see your username, your name, and what you posted.</li>
@@ -378,25 +380,15 @@ h3{font-size:15px;font-weight:700}
 
         <form id="loginForm">
           <h2>Welcome back</h2>
-          <p class="section-copy" style="margin-bottom:20px">Registered students can sign in with the username and password they created.</p>
+          <p class="section-copy" style="margin-bottom:20px">Use the username you chose when you signed up.</p>
           <div id="loginError" class="alert hidden"></div>
-
-          <div class="google-box" id="loginGoogle"></div>
-          <div class="google-note">Use the same Google account you registered with.</div>
-
-          <div style="display:flex;align-items:center;gap:10px;margin:18px 0;color:var(--text-3);font-size:11px">
-            <span style="height:1px;background:var(--border);flex:1"></span>
-            <span>OR USE YOUR LOST2FOUND ACCOUNT</span>
-            <span style="height:1px;background:var(--border);flex:1"></span>
-          </div>
-
           <div class="field">
-            <label class="label" for="loginUser">Username</label>
-            <input id="loginUser" class="input" autocomplete="username" placeholder="Your Lost2Found username" required>
+            <label class="label" for="loginUser">Username or email</label>
+            <input id="loginUser" class="input" autocomplete="username" required>
           </div>
           <div class="field">
             <label class="label" for="loginPass">Password</label>
-            <input id="loginPass" class="input" type="password" autocomplete="current-password" placeholder="Your password" required>
+            <input id="loginPass" class="input" type="password" autocomplete="current-password" required>
           </div>
           <button class="btn btn-primary btn-block" id="loginBtn" type="submit">Sign in</button>
           <div class="switch">New here? <span class="linkish" id="goRegister">Create an account</span></div>
@@ -404,48 +396,60 @@ h3{font-size:15px;font-weight:700}
 
         <form id="registerForm" class="hidden">
           <h2>Create your account</h2>
-          <p class="section-copy" style="margin-bottom:18px">First verify your Google account. Then choose the username and password you will use for future sign-ins.</p>
+          <p class="section-copy" style="margin-bottom:20px">Confirm your email, pick a username, set a password.</p>
           <div id="regError" class="alert hidden"></div>
-
-          <div class="google-box" id="registerGoogle"></div>
-          <div id="googleVerified" class="google-status hidden">Google account verified. Complete your Lost2Found profile below.</div>
 
           <div class="field">
             <label class="label" for="regName">Full name</label>
-            <input id="regName" class="input auth-disabled" autocomplete="name" placeholder="Continue with Google first" readonly required>
+            <input id="regName" class="input" autocomplete="name" placeholder="As it appears on your ID card" required>
           </div>
 
           <div class="field">
-            <label class="label" for="regEmail">Google email</label>
-            <input id="regEmail" class="input auth-disabled" type="email" autocomplete="email" placeholder="Verified by Google" readonly required>
-            <div class="hint">Your Google account provides the email, so students cannot enter a fake address.</div>
+            <label class="label" for="regEmail">Email</label>
+            <div class="row">
+              <input id="regEmail" class="input" type="email" autocomplete="email" placeholder="you@college.edu" required>
+              <button class="btn btn-secondary" type="button" id="otpSend">Send code</button>
+            </div>
+            <div class="hint">We send a 6-digit code to check the address works.</div>
           </div>
+
+          <div id="otpBox" class="otp-panel hidden">
+            <div style="font-weight:750;font-size:13px;margin-bottom:4px">Enter the 6-digit code</div>
+            <div class="hint" id="otpSentFrom" style="margin-bottom:10px">A verification code was sent to your email.</div>
+            <label class="label" for="otpInput">Verification code</label>
+            <div class="row">
+              <input id="otpInput" class="input otp-input" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="000000" autocomplete="one-time-code" aria-label="6-digit email verification code">
+              <button class="btn btn-soft" type="button" id="otpVerify">Verify OTP</button>
+            </div>
+            <div class="hint" id="otpHint">The code is temporary and expires in 5 minutes.</div>
+          </div>
+          <div id="otpDone" class="verified hidden">✓ Email verified successfully</div>
 
           <div class="field">
             <label class="label" for="regUser">Username</label>
-            <input id="regUser" class="input" autocomplete="off" placeholder="e.g. leonard_01" maxlength="20" disabled required>
-            <div class="hint" id="userHint">3–20 letters, numbers or underscores. Taken names are refused.</div>
+            <input id="regUser" class="input" autocomplete="off" placeholder="e.g. arun_k" maxlength="20" required>
+            <div class="hint" id="userHint">3&ndash;20 letters, numbers or underscores. Taken names are refused.</div>
           </div>
 
           <div class="field">
             <label class="label" for="regPhone">Phone number</label>
-            <input id="regPhone" class="input" type="tel" autocomplete="tel" placeholder="+91 98765 43210" disabled required>
-            <div class="hint">Kept private. It is never shown to other students.</div>
+            <input id="regPhone" class="input" type="tel" autocomplete="tel" placeholder="+91 98765 43210" required>
+            <div class="hint">Kept private. Used only if campus staff must reach you about a returned item.</div>
           </div>
 
           <div class="two">
             <div class="field">
               <label class="label" for="regPass">Password</label>
-              <input id="regPass" class="input" type="password" autocomplete="new-password" placeholder="Create your password" disabled required>
+              <input id="regPass" class="input" type="password" autocomplete="new-password" required>
             </div>
             <div class="field">
               <label class="label" for="regPass2">Repeat password</label>
-              <input id="regPass2" class="input" type="password" autocomplete="new-password" placeholder="Repeat your password" disabled required>
+              <input id="regPass2" class="input" type="password" autocomplete="new-password" required>
             </div>
           </div>
           <div class="hint" id="passHint" style="margin:-4px 0 16px">At least 8 characters, with upper case, lower case and a number.</div>
 
-          <button class="btn btn-primary btn-block" id="regBtn" type="submit" disabled>Create account</button>
+          <button class="btn btn-primary btn-block" id="regBtn" type="submit">Create account</button>
           <div class="switch">Already registered? <span class="linkish" id="goLogin">Sign in</span></div>
         </form>
       </div>
@@ -495,14 +499,12 @@ h3{font-size:15px;font-weight:700}
    Helpers
    ============================================================ */
 var $ = function (id) { return document.getElementById(id); };
-var state = { token: null, me: null, route: 'home', thread: null, photo: null, googleRegToken: null, googleProfile: null };
+var state = { token: null, me: null, route: 'home', verifyToken: null, thread: null, photo: null };
 var SPIN = '<div class="loading"><span class="spinner load-dot"></span></div>';
 
 /* Your Apps Script web app's /exec URL. Deployment must have
    "Who has access: Anyone", or every call below gets a sign-in
    page back instead of JSON. */
-var APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxQeXSQpqgjd0Ham4JZqKV5oQwCkfBl0M0_xtbSu-Wy6NGz1EmmS_BBt4zMvMbs5E-d/exec";
-var GOOGLE_CLIENT_ID = "PASTE_YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com";
 
 function esc(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -547,99 +549,48 @@ $('modalClose').onclick = closeModal;
 $('backdrop').addEventListener('click', function (e) { if (e.target === $('backdrop')) closeModal(); });
 document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeModal(); });
 
-var bridgeFrame = null;
-var bridgeReady = null;
-var bridgeSeq = 0;
-var bridgePending = {};
-
-function getBridge() {
-  if (bridgeReady) return bridgeReady;
-
-  bridgeReady = new Promise(function (resolve, reject) {
-    try {
-      bridgeFrame = document.createElement('iframe');
-      bridgeFrame.title = 'Lost2Found service bridge';
-      bridgeFrame.setAttribute('aria-hidden', 'true');
-      bridgeFrame.style.position = 'fixed';
-      bridgeFrame.style.width = '1px';
-      bridgeFrame.style.height = '1px';
-      bridgeFrame.style.opacity = '0';
-      bridgeFrame.style.pointerEvents = 'none';
-      bridgeFrame.style.border = '0';
-
-      var origin = window.location.origin;
-      if (!/^https?:$/.test(window.location.protocol)) origin = '*';
-      bridgeFrame.src = APPS_SCRIPT_URL + '?bridge=1&origin=' + encodeURIComponent(origin);
-
-      bridgeFrame.onload = function () { resolve(bridgeFrame); };
-      bridgeFrame.onerror = function () { reject(new Error('Could not load the Lost2Found service. Check the Apps Script deployment.')); };
-      document.body.appendChild(bridgeFrame);
-    } catch (err) {
-      reject(err);
-    }
-  });
-
-  return bridgeReady;
-}
-
-window.addEventListener('message', function (event) {
-  if (!bridgeFrame || event.source !== bridgeFrame.contentWindow) return;
-  var msg = event.data || {};
-  if (msg.source !== 'l2f-bridge' || !msg.id) return;
-  var pending = bridgePending[msg.id];
-  if (!pending) return;
-  delete bridgePending[msg.id];
-  if (msg.error) pending.reject(new Error(msg.error));
-  else pending.resolve(msg.result);
-});
-
 function rpc(action, payload) {
   payload = payload || {};
   if (state.token) payload.token = state.token;
 
-  // Direct Apps Script hosting: use google.script.run with no CORS.
-  if (typeof google !== 'undefined' && google.script && google.script.run) {
-    return new Promise(function (resolve, reject) {
-      google.script.run
-        .withSuccessHandler(function (res) { settleRpc(res, resolve, reject); })
-        .withFailureHandler(function (err) {
-          reject(new Error(err && err.message ? err.message : 'Server error.'));
-        })
-        .rpc(action, payload, null);
-    });
+  /*
+     IMPORTANT:
+     This application is served by Google Apps Script itself.
+     Therefore we use google.script.run directly.
+     This removes the CORS / iframe / 503 bridge problem that occurs
+     when the HTML is hosted on Vercel or opened as a local file.
+  */
+  if (typeof google === 'undefined' || !google.script || !google.script.run) {
+    return Promise.reject(new Error(
+      'Open Lost2Found using the deployed Google Apps Script Web App URL.'
+    ));
   }
 
-  // External hosting (Vercel/localhost): use an Apps Script iframe bridge.
-  return getBridge().then(function (frame) {
-    return new Promise(function (resolve, reject) {
-      var id = 'l2f-' + (++bridgeSeq) + '-' + Date.now();
-
-      bridgePending[id] = {
-        resolve: function (res) { settleRpc(res, resolve, reject); },
-        reject: reject
-      };
-
-      frame.contentWindow.postMessage({
-        source: 'l2f-client',
-        id: id,
-        action: action,
-        payload: payload
-      }, '*');
-
-      setTimeout(function () {
-        if (!bridgePending[id]) return;
-        delete bridgePending[id];
-        reject(new Error('The Lost2Found server took too long to respond. Please try again.'));
-      }, 90000);
-    });
+  return new Promise(function (resolve, reject) {
+    google.script.run
+      .withSuccessHandler(function (res) {
+        settleRpc(res, resolve, reject);
+      })
+      .withFailureHandler(function (err) {
+        reject(new Error(
+          err && err.message
+            ? err.message
+            : 'The Lost2Found server could not complete the request.'
+        ));
+      })
+      .rpc(action, payload, state.token || null);
   });
 }
 
 function settleRpc(res, resolve, reject) {
   if (!res) return reject(new Error('No response from the server.'));
-  if (res.ok) return resolve(res.data);
-  if (/session|sign in/i.test(res.error) && state.token) signOut(true);
-  reject(new Error(res.error));
+  if (res.ok) return resolve(res.data || {});
+
+  if (/session|sign in/i.test(String(res.error || '')) && state.token) {
+    signOut(true);
+  }
+
+  reject(new Error(res.error || 'Something went wrong on the server.'));
 }
 
 function niceDate(iso) {
@@ -677,116 +628,11 @@ function switchAuth(which) {
   $('registerForm').classList.toggle('hidden', login);
   showError($('loginError'), '');
   showError($('regError'), '');
-  setTimeout(initGoogleButtons, 50);
 }
 $('tabLogin').onclick = function () { switchAuth('login'); };
 $('tabRegister').onclick = function () { switchAuth('register'); };
 $('goRegister').onclick = function () { switchAuth('register'); };
 $('goLogin').onclick = function () { switchAuth('login'); };
-
-function googleConfigured() {
-  return GOOGLE_CLIENT_ID &&
-    GOOGLE_CLIENT_ID.indexOf('PASTE_YOUR_GOOGLE_CLIENT_ID') !== 0 &&
-    /\.apps\.googleusercontent\.com$/.test(GOOGLE_CLIENT_ID);
-}
-
-var googleInitialized = false;
-
-function initGoogleButtons() {
-  if (!window.google || !google.accounts || !google.accounts.id) {
-    return;
-  }
-  if (!googleConfigured()) {
-    $('loginGoogle').innerHTML = '<div class="alert info" style="width:100%;margin:0">Google Sign-In is ready, but the Google Client ID has not been added yet.</div>';
-    $('registerGoogle').innerHTML = '<div class="alert info" style="width:100%;margin:0">Google Sign-In is ready, but the Google Client ID has not been added yet.</div>';
-    return;
-  }
-
-  if (!googleInitialized) {
-    google.accounts.id.initialize({
-      client_id: GOOGLE_CLIENT_ID,
-      callback: handleGoogleCredential,
-      auto_select: false,
-      cancel_on_tap_outside: true,
-      use_fedcm_for_prompt: true
-    });
-    googleInitialized = true;
-  }
-
-  $('loginGoogle').innerHTML = '';
-  $('registerGoogle').innerHTML = '';
-
-  google.accounts.id.renderButton($('loginGoogle'), {
-    type: 'standard',
-    theme: 'outline',
-    size: 'large',
-    text: 'continue_with',
-    shape: 'rectangular',
-    width: 360,
-    logo_alignment: 'left'
-  });
-
-  google.accounts.id.renderButton($('registerGoogle'), {
-    type: 'standard',
-    theme: 'outline',
-    size: 'large',
-    text: 'continue_with',
-    shape: 'rectangular',
-    width: 360,
-    logo_alignment: 'left'
-  });
-}
-
-function handleGoogleCredential(response) {
-  if (!response || !response.credential) {
-    toast('Google did not return an account credential.', true);
-    return;
-  }
-
-  var activeRegister = !$('registerForm').classList.contains('hidden');
-  var target = activeRegister ? $('registerGoogle') : $('loginGoogle');
-  var original = target.innerHTML;
-  target.innerHTML = '<div class="google-status" style="margin:0">Checking your Google account…</div>';
-
-  rpc('googleSignIn', { idToken: response.credential })
-    .then(function (d) {
-      if (d.needsRegistration) {
-        state.googleRegToken = d.registrationToken;
-        state.googleProfile = d.profile;
-
-        $('regName').value = d.profile.name || '';
-        $('regEmail').value = d.profile.email || '';
-        $('regName').classList.add('auth-disabled');
-        $('regEmail').classList.add('auth-disabled');
-        $('regUser').disabled = false;
-        $('regPhone').disabled = false;
-        $('regPass').disabled = false;
-        $('regPass2').disabled = false;
-        $('regBtn').disabled = false;
-        $('googleVerified').classList.remove('hidden');
-        $('loginGoogle').innerHTML = original;
-        $('registerGoogle').innerHTML = '<div class="google-status" style="margin:0">Google account verified for ' + esc(d.profile.email) + '</div>';
-        switchAuth('register');
-        toast('Google account verified. Now choose your username and password.');
-        return;
-      }
-
-      state.token = d.token;
-      state.me = d.me;
-      try { localStorage.setItem('clf_token', d.token); } catch (err) {}
-      enterApp();
-      toast('Welcome back, @' + d.me.username);
-    })
-    .catch(function (err) {
-      target.innerHTML = original;
-      if (activeRegister) {
-        showError($('regError'), err.message);
-      } else {
-        showError($('loginError'), err.message);
-      }
-      initGoogleButtons();
-    });
-}
 
 $('loginForm').addEventListener('submit', function (e) {
   e.preventDefault();
@@ -795,13 +641,76 @@ $('loginForm').addEventListener('submit', function (e) {
   busy(btn, true, 'Signing in');
   rpc('login', { username: $('loginUser').value, password: $('loginPass').value })
     .then(function (d) {
-      state.token = d.token;
-      state.me = d.me;
+      state.token = d.token; state.me = d.me;
       try { localStorage.setItem('clf_token', d.token); } catch (err) {}
       enterApp();
     })
     .catch(function (err) { showError($('loginError'), err.message); })
     .then(function () { busy(btn, false); });
+});
+
+$('otpSend').onclick = function () {
+  var email = $('regEmail').value.trim();
+  if (!email) return showError($('regError'), 'Enter your email first.');
+  showError($('regError'), '');
+  var btn = $('otpSend');
+  busy(btn, true);
+  rpc('sendEmailOtp', { email: email })
+    .then(function (d) {
+      $('otpBox').classList.remove('hidden');
+      $('otpDone').classList.add('hidden');
+      state.verifyToken = null;
+      $('otpHint').className = 'hint';
+      $('otpHint').textContent = 'The code is temporary and expires in ' + d.ttlMinutes + ' minutes.';
+      $('otpSentFrom').textContent = 'Code sent to ' + d.maskedEmail + ' from ' + (d.senderEmail || 'Lost2Found Campus') + '.';
+      $('otpInput').focus();
+      countdown(btn, 45, 'Send code');
+    })
+    .catch(function (err) { showError($('regError'), err.message); busy(btn, false); });
+};
+
+function countdown(btn, secs, label) {
+  busy(btn, false);
+  btn.disabled = true;
+  var left = secs;
+  btn.textContent = 'Resend ' + left + 's';
+  var t = setInterval(function () {
+    left--;
+    if (left <= 0) { clearInterval(t); btn.disabled = false; btn.textContent = label; }
+    else btn.textContent = 'Resend ' + left + 's';
+  }, 1000);
+}
+
+$('otpVerify').onclick = function () {
+  var code = $('otpInput').value.trim();
+  if (!/^\d{6}$/.test(code)) {
+    $('otpHint').className = 'hint bad';
+    $('otpHint').textContent = 'Enter the 6-digit OTP from your email.';
+    $('otpInput').focus();
+    return;
+  }
+  var btn = $('otpVerify');
+  busy(btn, true);
+  rpc('verifyEmailOtp', { email: $('regEmail').value.trim(), code: code })
+    .then(function (d) {
+      state.verifyToken = d.verifyToken;
+      $('otpBox').classList.add('hidden');
+      $('otpDone').classList.remove('hidden');
+      toast('Email confirmed');
+    })
+    .catch(function (err) {
+      $('otpHint').className = 'hint bad';
+      $('otpHint').textContent = err.message;
+    })
+    .then(function () { busy(btn, false); });
+};
+
+$('regEmail').addEventListener('input', function () {
+  state.verifyToken = null;
+  $('otpBox').classList.add('hidden');
+  $('otpDone').classList.add('hidden');
+  $('otpInput').value = '';
+  $('otpHint').textContent = 'The code is temporary and expires in 5 minutes.';
 });
 
 var userTimer = null;
@@ -810,21 +719,18 @@ $('regUser').addEventListener('input', function () {
   clearTimeout(userTimer);
   if (!v) {
     hint.className = 'hint';
-    hint.textContent = '3–20 letters, numbers or underscores. Taken names are refused.';
+    hint.textContent = '3\u201320 letters, numbers or underscores. Taken names are refused.';
     return;
   }
   hint.className = 'hint';
-  hint.textContent = 'Checking…';
+  hint.textContent = 'Checking\u2026';
   userTimer = setTimeout(function () {
     rpc('checkUsername', { username: v })
       .then(function (d) {
         hint.className = 'hint ' + (d.available ? 'good' : 'bad');
         hint.textContent = d.available ? '@' + v + ' is free.' : d.reason;
       })
-      .catch(function (e) {
-        hint.className = 'hint bad';
-        hint.textContent = e.message || 'Could not check the username.';
-      });
+      .catch(function () { hint.className = 'hint'; hint.textContent = ''; });
   }, 420);
 });
 
@@ -841,38 +747,26 @@ $('regPass2').addEventListener('input', function () {
 
 $('registerForm').addEventListener('submit', function (e) {
   e.preventDefault();
-
   showError($('regError'), '');
-
-  if (!state.googleRegToken) {
-    return showError($('regError'), 'Continue with Google first. Your account email must be verified by Google.');
+  if (!state.verifyToken) {
+    return showError($('regError'), 'Confirm your email with the code before creating the account.');
   }
-
   var btn = $('regBtn');
   busy(btn, true, 'Creating');
-
-  rpc('registerWithGoogle', {
-    registrationToken: state.googleRegToken,
-    username: $('regUser').value,
-    phone: $('regPhone').value,
-    password: $('regPass').value,
-    confirm: $('regPass2').value
+  rpc('register', {
+    displayName: $('regName').value, username: $('regUser').value,
+    email: $('regEmail').value, phone: $('regPhone').value,
+    password: $('regPass').value, confirm: $('regPass2').value,
+    verifyToken: state.verifyToken
   })
     .then(function (d) {
-      state.googleRegToken = null;
-      state.googleProfile = null;
-      state.token = d.token;
-      state.me = d.me;
+      state.token = d.token; state.me = d.me;
       try { localStorage.setItem('clf_token', d.token); } catch (err) {}
       enterApp();
-      toast('Account created. Welcome, @' + d.me.username);
+      toast('Welcome, @' + d.me.username);
     })
     .catch(function (err) { showError($('regError'), err.message); })
     .then(function () { busy(btn, false); });
-});
-
-window.addEventListener('load', function () {
-  setTimeout(initGoogleButtons, 300);
 });
 
 /* ============================================================
