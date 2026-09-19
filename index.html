@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campus Lost & Found Portal</title>
+    <style>
+        /* CSS Variables */
+        :root {
+            --color-primary: #2563eb;
+            --color-primary-dark: #1e40af;
+            --color-secondary: #10b981;
+            --color-accent: #f59e0b;
+            --color-danger: #ef4444;
+            --color-text-primary: #1f2937;
+            --color-text-secondary: #6b7280;
+            --color-text-light: #9ca3af;
+            --color-bg-primary: #ffffff;
+            --color-bg-secondary: #f9fafb;
+            --color-bg-tertiary: #f3f4f6;
+            --color-border: #e5e7eb;
+            --color-border-light: #f3f4f6;
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+            --spacing-2xl: 3rem;
+            --spacing-3xl: 4rem;
+            --radius-sm: 0.375rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            --radius-xl: 1rem;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --transition-fast: 150ms ease-in-out;
+            --transition-base: 250ms ease-in-out;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: var(--color-text-primary);
+            background-color: var(--color-bg-primary);
+        }
+
+        /* Typography */
+        h1, h2, h3, h4, h5, h6 {
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        h1 {
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        h2 {
+            font-size: clamp(1.75rem, 4vw, 2.5rem);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        h3 {
+            font-size: clamp(1.25rem, 3vw, 1.75rem);
+            margin-bottom: var(--spacing-md);
+        }
+
+        p {
+            color: var(--color-text-secondary);
+            margin-bottom: var(--spacing-md);
+        }
+
+        a {
+            color: var(--color-primary);
+            text-decoration: none;
+            transition: color var(--transition-fast);
+        }
+
+        a:hover {
+            color: var(--color-primary-dark);
+        }
+
+        /* Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 var(--spacing-lg);
+        }
+
+        /* Header / Navigation */
+        header {
+            background-color: var(--color-bg-primary);
+            border-bottom: 1px solid var(--color-border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-lg) 0;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--color-primary);
+        }
+
+        nav {
+            display: flex;
+            gap: var(--spacing-xl);
+            align-items: center;
+        }
+
+        nav a {
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--color-text-primary);
+            transition: color var(--transition-fast);
+        }
+
+        nav a:hover {
+            color: var(--color-primary);
+        }
+
+        .nav-button {
+            background-color: var(--color-primary);
+            color: white;
+            padding: var(--spacing-sm) var(--spacing-lg);
+            border-radius: var(--radius-md);
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color var(--transition-fast);
+        }
+
+        .nav-button:hover {
+            background-color: var(--color-primary-dark);
+        }
+
+        .mobile-menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--color-text-primary);
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+            color: white;
+            padding: var(--spacing-3xl) 0;
+            text-align: center;
+        }
+
+        .hero-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--spacing-xl);
+        }
+
+        .hero h1 {
+            color: white;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .hero p {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: var(--spacing-lg);
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: var(--spacing-sm) var(--spacing-xl);
+            border-radius: var(--radius-md);
+            border: none;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .btn-primary {
+            background-color: white;
+            color: var(--color-primary);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            color: white;
+            border: 2px solid white;
+        }
+
+        .btn-secondary:hover {
+            background-color: white;
+            color: var(--color-primary);
+        }
+
+        /* Features Section */
+        .features {
+            padding: var(--spacing-3xl) 0;
+            background-color: var(--color-bg-secondary);
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: var(--spacing-3xl);
+        }
+
+        .section-title h2 {
+            margin-bottom: var(--spacing-md);
+        }
+
+        .section-title p {
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: var(--spacing-2xl);
+        }
+
+        .feature-card {
+            background-color: var(--color-bg-primary);
+            padding: var(--spacing-2xl);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            transition: all var(--transition-base);
+            text-align: center;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .feature-card h3 {
+            margin-bottom: var(--spacing-md);
+        }
+
+        .feature-card p {
+            color: var(--color-text-secondary);
+            margin-bottom: 0;
+        }
+
+        /* Image Section */
+        .image-section {
+            padding: var(--spacing-3xl) 0;
+        }
+
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--spacing-xl);
+            margin-bottom: var(--spacing-3xl);
+        }
+
+        .image-item {
+            position: relative;
+            overflow: hidden;
+            border-radius: var(--radius-lg);
+            aspect-ratio: 1;
+            box-shadow: var(--shadow-md);
+            transition: transform var(--transition-base);
+        }
+
+        .image-item:hover {
+            transform: scale(1.05);
+        }
+
+        .image-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        /* Stats Section */
+        .stats {
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+            color: white;
+            padding: var(--spacing-3xl) 0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-2xl);
+            text-align: center;
+        }
+
+        .stat {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+        }
+
+        .stat-number {
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 700;
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        /* Testimonials Section */
+        .testimonials {
+            padding: var(--spacing-3xl) 0;
+            background-color: var(--color-bg-secondary);
+        }
+
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--spacing-2xl);
+        }
+
+        .testimonial-card {
+            background-color: var(--color-bg-primary);
+            padding: var(--spacing-2xl);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+        }
+
+        .stars {
+            color: var(--color-accent);
+            font-size: 1.2rem;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .testimonial-text {
+            margin-bottom: var(--spacing-lg);
+            color: var(--color-text-secondary);
+            font-style: italic;
+        }
+
+        .testimonial-author {
+            font-weight: 600;
+            color: var(--color-text-primary);
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .testimonial-role {
+            font-size: 0.9rem;
+            color: var(--color-text-light);
+        }
+
+        /* Form Section */
+        .form-section {
+            padding: var(--spacing-3xl) 0;
+        }
+
+        .form-wrapper {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: var(--color-bg-secondary);
+            padding: var(--spacing-3xl);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-md);
+        }
+
+        .form-section h2 {
+            text-align: center;
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .form-description {
+            text-align: center;
+            margin-bottom: var(--spacing-2xl);
+            color: var(--color-text-secondary);
+        }
+
+        .form-group {
+            margin-bottom: var(--spacing-xl);
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: var(--spacing-sm);
+            color: var(--color-text-primary);
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"] {
+            width: 100%;
+            padding: var(--spacing-md);
+            border: 2px solid var(--color-border);
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+            font-family: inherit;
+            transition: all var(--transition-fast);
+        }
+
+        input[type="text"]:focus,
+        input[type="email"]:focus,
+        input[type="tel"]:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        input[type="text"]:invalid,
+        input[type="email"]:invalid,
+        input[type="tel"]:invalid {
+            border-color: var(--color-danger);
+        }
+
+        .form-error {
+            display: none;
+            color: var(--color-danger);
+            font-size: 0.875rem;
+            margin-top: var(--spacing-xs);
+        }
+
+        .form-group.error input {
+            border-color: var(--color-danger);
+        }
+
+        .form-group.error .form-error {
+            display: block;
+        }
+
+        .form-submit {
+            width: 100%;
+            padding: var(--spacing-md);
+            background-color: var(--color-primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .form-submit:hover:not(:disabled) {
+            background-color: var(--color-primary-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .form-submit:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .form-submit.loading {
+            position: relative;
+            color: transparent;
+        }
+
+        .form-submit.loading::after {
+            content: "";
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            top: 50%;
+            left: 50%;
+            margin-left: -8px;
+            margin-top: -8px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spinner 0.6s linear infinite;
+        }
+
+        @keyframes spinner {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .form-message {
+            margin-top: var(--spacing-lg);
+            padding: var(--spacing-md);
+            border-radius: var(--radius-md);
+            display: none;
+            text-align: center;
+        }
+
+        .form-message.success {
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #6ee7b7;
+            display: block;
+        }
+
+        .form-message.error {
+            background-color: #fee2e2;
+            color: #7f1d1d;
+            border: 1px solid #fca5a5;
+            display: block;
+        }
+
+        /* CTA Section */
+        .cta {
+            background: linear-gradient(135deg, var(--color-secondary) 0%, #059669 100%);
+            color: white;
+            padding: var(--spacing-3xl) 0;
+            text-align: center;
+        }
+
+        .cta h2 {
+            color: white;
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .cta p {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto var(--spacing-xl);
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--color-text-primary);
+            color: white;
+            padding: var(--spacing-3xl) 0 var(--spacing-xl);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--spacing-2xl);
+            margin-bottom: var(--spacing-2xl);
+        }
+
+        .footer-section h4 {
+            color: white;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .footer-section p,
+        .footer-section a {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.95rem;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .footer-section a:hover {
+            color: white;
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: var(--spacing-xl);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            nav {
+                display: none;
+            }
+
+            .mobile-menu-toggle {
+                display: block;
+            }
+
+            .hero {
+                padding: var(--spacing-2xl) 0;
+            }
+
+            .hero-buttons {
+                flex-direction: column;
+                gap: var(--spacing-md);
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+                gap: var(--spacing-xl);
+            }
+
+            .feature-card {
+                padding: var(--spacing-xl);
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: var(--spacing-xl);
+            }
+
+            .testimonials-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-wrapper {
+                padding: var(--spacing-2xl);
+                margin: 0 auto;
+            }
+
+            .image-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: var(--spacing-lg);
+            }
+
+            .footer-grid {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .container {
+                padding: 0 var(--spacing-md);
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.75rem;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+
+            .hero {
+                padding: var(--spacing-xl) 0;
+            }
+
+            .hero p {
+                font-size: 1rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stat-number {
+                font-size: 2rem;
+            }
+
+            .image-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-wrapper {
+                padding: var(--spacing-xl);
+                border-radius: var(--radius-lg);
+            }
+
+            .btn {
+                font-size: 0.95rem;
+                padding: var(--spacing-sm) var(--spacing-lg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">Lost & Found</div>
+                <nav>
+                    <a href="#home">Home</a>
+                    <a href="#features">Features</a>
+                    <a href="#testimonials">Testimonials</a>
+                    <a href="#contact">Contact</a>
+                    <button class="nav-button">Get Started</button>
+                </nav>
+                <button class="mobile-menu-toggle">☰</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero" id="home">
+        <div class="container">
+            <div class="hero-content">
+                <h1>Find What You've Lost</h1>
+                <p>The simplest way to report lost items and connect with the campus community. Safe, secure, and easy to use.</p>
+                <div class="hero-buttons">
+                    <button class="btn btn-primary">Report Lost Item</button>
+                    <button class="btn btn-secondary">Browse Found Items</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="container">
+            <div class="section-title">
+                <h2>How It Works</h2>
+                <p>Simple steps to help you recover your belongings</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">📝</div>
+                    <h3>Submit Report</h3>
+                    <p>Quickly report your lost item with details and a photo for better identification.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔍</div>
+                    <h3>Search Database</h3>
+                    <p>Browse through found items in our comprehensive database with advanced search filters.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💬</div>
+                    <h3>Get Notified</h3>
+                    <p>Receive instant notifications when matching items are found or reported by others.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">✅</div>
+                    <h3>Easy Verification</h3>
+                    <p>Verify ownership through a secure process and arrange convenient pickup or delivery.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🤝</div>
+                    <h3>Community Help</h3>
+                    <p>Connect with fellow students and staff who might have found what you're looking for.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎁</div>
+                    <h3>Reward Finder</h3>
+                    <p>Offer rewards for found items and incentivize the community to help you recover your belongings.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Image Gallery Section -->
+    <section class="image-section">
+        <div class="container">
+            <div class="section-title">
+                <h2>Recent Items</h2>
+                <p>Recently lost and found items on campus</p>
+            </div>
+            <div class="image-grid">
+                <div class="image-item">
+                    <img src="https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=500&h=500&fit=crop" alt="Wireless Earbuds">
+                </div>
+                <div class="image-item">
+                    <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&h=500&fit=crop" alt="Backpack">
+                </div>
+                <div class="image-item">
+                    <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&h=500&fit=crop" alt="Watch">
+                </div>
+                <div class="image-item">
+                    <img src="https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=500&h=500&fit=crop" alt="Phone">
+                </div>
+                <div class="image-item">
+                    <img src="https://images.unsplash.com/photo-1546868871-7541c2b8c6c7?w=500&h=500&fit=crop" alt="Glasses">
+                </div>
+                <div class="image-item">
+                    <img src="https://images.unsplash.com/photo-1491553895911-0055eca6402d?w=500&h=500&fit=crop" alt="Sneakers">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat">
+                    <div class="stat-number">2,847</div>
+                    <div class="stat-label">Items Recovered</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">12,400</div>
+                    <div class="stat-label">Active Users</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">98%</div>
+                    <div class="stat-label">Success Rate</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">24/7</div>
+                    <div class="stat-label">Support Available</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section class="testimonials" id="testimonials">
+        <div class="container">
+            <div class="section-title">
+                <h2>What Users Say</h2>
+                <p>Real stories from students who've successfully recovered their items</p>
+            </div>
+            <div class="testimonials-grid">
+                <div class="testimonial-card">
+                    <div class="stars">★★★★★</div>
+                    <p class="testimonial-text">"I lost my laptop during finals week and found it within hours thanks to this platform. The campus community is amazing!"</p>
+                    <div class="testimonial-author">Sarah Johnson</div>
+                    <div class="testimonial-role">Computer Science Major</div>
+                </div>
+                <div class="testimonial-card">
+                    <div class="stars">★★★★★</div>
+                    <p class="testimonial-text">"The search feature made it so easy to find my wallet. Highly recommended to every student on campus!"</p>
+                    <div class="testimonial-author">Michael Chen</div>
+                    <div class="testimonial-role">Business Administration</div>
+                </div>
+                <div class="testimonial-card">
+                    <div class="stars">★★★★★</div>
+                    <p class="testimonial-text">"Recovering lost items has never been easier. The notification system kept me updated every step of the way."</p>
+                    <div class="testimonial-author">Emily Rodriguez</div>
+                    <div class="testimonial-role">Psychology Student</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Form Section -->
+    <section class="form-section" id="contact">
+        <div class="container">
+            <div class="form-wrapper">
+                <h2>Get in Touch</h2>
+                <p class="form-description">Have a question or want to report an item? We'd love to hear from you. Fill out the form below and we'll get back to you soon.</p>
+                
+                <form id="contactForm">
+                    <div class="form-group">
+                        <label for="name">Full Name</label>
+                        <input 
+                            type="text" 
+                            id="name" 
+                            name="name" 
+                            placeholder="Enter your full name"
+                            required
+                        >
+                        <div class="form-error">Please enter your full name</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input 
+                            type="email" 
+                            id="email" 
+                            name="email" 
+                            placeholder="Enter your email address"
+                            required
+                        >
+                        <div class="form-error">Please enter a valid email address</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone">Phone Number</label>
+                        <input 
+                            type="tel" 
+                            id="phone" 
+                            name="phone" 
+                            placeholder="Enter your phone number"
+                            required
+                        >
+                        <div class="form-error">Please enter a valid phone number</div>
+                    </div>
+
+                    <button type="submit" class="form-submit">Send Message</button>
+                    <div class="form-message" id="formMessage"></div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta">
+        <div class="container">
+            <h2>Ready to Find What You've Lost?</h2>
+            <p>Join thousands of students who have successfully recovered their items through our platform.</p>
+            <button class="btn btn-primary">Get Started Today</button>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-section">
+                    <h4>About Us</h4>
+                    <p>Campus Lost & Found is dedicated to helping students recover their belongings through a secure and community-driven platform.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <a href="#home">Home</a>
+                    <a href="#features">Features</a>
+                    <a href="#testimonials">Testimonials</a>
+                    <a href="#contact">Contact</a>
+                </div>
+                <div class="footer-section">
+                    <h4>Contact Info</h4>
+                    <p>Email: support@lostfound.edu</p>
+                    <p>Phone: (555) 123-4567</p>
+                    <p>Hours: 24/7 Support Available</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Follow Us</h4>
+                    <a href="#">Facebook</a>
+                    <a href="#">Twitter</a>
+                    <a href="#">Instagram</a>
+                    <a href="#">LinkedIn</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Campus Lost & Found. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Google Apps Script Endpoint
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwrMJRLdA7MeYwVWQCa-pI6YukFl7A-aYuJkEkI5v6IgX3UcmT4tcp6Beynal0LuWAD/exec';
+
+        // Form Elements
+        const form = document.getElementById('contactForm');
+        const nameInput = document.getElementById('name');
+        const emailInput = document.getElementById('email');
+        const phoneInput = document.getElementById('phone');
+        const submitButton = document.querySelector('.form-submit');
+        const formMessage = document.getElementById('formMessage');
+
+        // Form Validation
+        function validateForm() {
+            let isValid = true;
+
+            // Validate Name
+            const nameGroup = nameInput.parentElement.parentElement;
+            if (!nameInput.value.trim()) {
+                nameGroup.classList.add('error');
+                isValid = false;
+            } else {
+                nameGroup.classList.remove('error');
+            }
+
+            // Validate Email
+            const emailGroup = emailInput.parentElement.parentElement;
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailInput.value.trim() || !emailRegex.test(emailInput.value)) {
+                emailGroup.classList.add('error');
+                isValid = false;
+            } else {
+                emailGroup.classList.remove('error');
+            }
+
+            // Validate Phone
+            const phoneGroup = phoneInput.parentElement.parentElement;
+            const phoneRegex = /^[\d\s\-\+\(\)]{10,}$/;
+            if (!phoneInput.value.trim() || !phoneRegex.test(phoneInput.value.replace(/\s/g, ''))) {
+                phoneGroup.classList.add('error');
+                isValid = false;
+            } else {
+                phoneGroup.classList.remove('error');
+            }
+
+            return isValid;
+        }
+
+        // Clear error on input
+        [nameInput, emailInput, phoneInput].forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.parentElement.classList.remove('error');
+            });
+        });
+
+        // Form Submission - Using GET request with query parameters (CORS-friendly)
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Validate form
+            if (!validateForm()) {
+                showMessage('Please fill in all required fields correctly', 'error');
+                return;
+            }
+
+            // Disable submit button and show loading state
+            submitButton.disabled = true;
+            submitButton.classList.add('loading');
+
+            const name = encodeURIComponent(nameInput.value.trim());
+            const email = encodeURIComponent(emailInput.value.trim());
+            const phone = encodeURIComponent(phoneInput.value.trim());
+
+            // Build URL with query parameters
+            const queryURL = `${APPS_SCRIPT_URL}?name=${name}&email=${email}&phone=${phone}`;
+
+            try {
+                // Submit using fetch with no-cors mode (GET request)
+                const response = await fetch(queryURL, {
+                    method: 'GET',
+                    mode: 'no-cors'
+                });
+
+                // Since no-cors mode doesn't give us response body, assume success if request went through
+                showMessage('Thank you! Your message has been sent successfully. We\'ll get back to you soon.', 'success');
+                form.reset();
+                nameInput.parentElement.parentElement.classList.remove('error');
+                emailInput.parentElement.parentElement.classList.remove('error');
+                phoneInput.parentElement.parentElement.classList.remove('error');
+
+            } catch (error) {
+                console.error('Form submission error:', error);
+                showMessage('An error occurred while submitting the form. Please check your internet connection and try again.', 'error');
+            } finally {
+                // Re-enable submit button and remove loading state
+                submitButton.disabled = false;
+                submitButton.classList.remove('loading');
+            }
+        });
+
+        // Show message function
+        function showMessage(message, type) {
+            formMessage.textContent = message;
+            formMessage.className = `form-message ${type}`;
+            formMessage.style.display = 'block';
+
+            // Auto-hide success message after 5 seconds
+            if (type === 'success') {
+                setTimeout(() => {
+                    formMessage.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        // Smooth scroll for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                const href = this.getAttribute('href');
+                if (href !== '#' && document.querySelector(href)) {
+                    e.preventDefault();
+                    document.querySelector(href).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+
+        // Button click handlers
+        document.querySelectorAll('.btn-primary, .nav-button').forEach(button => {
+            button.addEventListener('click', function() {
+                document.getElementById('contact').scrollIntoView({ behavior: 'smooth' });
+            });
+        });
+    </script>
+</body>
+</html>
