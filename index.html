@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Campus Lost &amp; Found</title>
+<title>Lost2Found</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -331,13 +331,13 @@ h3{font-size:15px;font-weight:700}
   <div class="auth">
     <section class="auth-visual">
       <div class="brand">
-        <div class="brand-mark">L&amp;F</div>
-        <div>Campus Lost &amp; Found<span class="brand-sub">Students returning things to students</span></div>
+        <div class="brand-mark">L2F</div>
+        <div>Lost2Found<span class="brand-sub">Students returning things to students</span></div>
       </div>
 
       <div class="orbit-scene" aria-hidden="true">
         <div class="orbit"></div>
-        <div class="cube">CLF</div>
+        <div class="cube">L2F</div>
         <div class="chip chip-a"><i style="background:var(--red)"></i>Wallet reported lost</div>
         <div class="chip chip-b"><i style="background:var(--green)"></i>ID card found</div>
         <div class="chip chip-c"><i style="background:var(--primary)"></i>Owner verified</div>
@@ -451,8 +451,8 @@ h3{font-size:15px;font-weight:700}
   <header class="topbar">
     <div class="topbar-inner">
       <div class="brand">
-        <div class="brand-mark">L&amp;F</div>
-        <div>Lost &amp; Found<span class="brand-sub">Campus portal</span></div>
+        <div class="brand-mark">L2F</div>
+        <div>Lost2Found<span class="brand-sub">Campus portal</span></div>
       </div>
       <nav class="nav" id="nav"></nav>
       <div class="user-pill">
@@ -494,7 +494,7 @@ var SPIN = '<div class="loading"><span class="spinner load-dot"></span></div>';
 /* Your Apps Script web app's /exec URL. Deployment must have
    "Who has access: Anyone", or every call below gets a sign-in
    page back instead of JSON. */
-var APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx8UqI684-HVC8eZWCkCKeNFaYrgJM5PbYSNH-WRXoAktdNKSUqGxgFNTF30O0VYSLL/exec";
+var APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxQeXSQpqgjd0Ham4JZqKV5oQwCkfBl0M0_xtbSu-Wy6NGz1EmmS_BBt4zMvMbs5E-d/exec";
 
 function esc(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -844,7 +844,7 @@ function paintHome() {
 
         '<section class="section">' +
           '<div class="grid-3">' +
-            quick('search', 'Search the board', 'Filter by category, or paste a CLF code someone gave you.') +
+            quick('search', 'Search the board', 'Filter by category, or paste an L2F code someone gave you.') +
             quick('claims', 'Verify a claim', 'Read the proof someone gave before you agree to meet.') +
             quick('messages', 'Message a student', 'Type their username. Neither of you sees contact details.') +
           '</div>' +
@@ -925,12 +925,12 @@ function paintSearch() {
     '<section class="section">' +
       '<div class="section-head"><div>' +
         '<div class="section-title">Search the board</div>' +
-        '<p class="section-copy">Got a CLF code from someone? Paste it here to open that listing.</p>' +
+        '<p class="section-copy">Got an L2F code from someone? Paste it here to open that listing.</p>' +
       '</div></div>' +
       '<div class="card pad" style="margin-bottom:18px">' +
         '<div class="field">' +
-          '<label class="label" for="q">Item name, colour, place or CLF code</label>' +
-          '<input id="q" class="input" placeholder="black wallet, CLF-4KQ2MZ, canteen\u2026">' +
+          '<label class="label" for="q">Item name, colour, place or L2F code</label>' +
+          '<input id="q" class="input" placeholder="black wallet, L2F-4KQ2MZ, canteen\u2026">' +
         '</div>' +
         '<div class="grid-3">' +
           selectField('fType', 'Lost or found', [['all','Everything'],['lost','Lost by someone'],['found','Found by someone']]) +
@@ -1444,7 +1444,7 @@ function loadThread() {
                   '<time>' + esc(niceTime(m.createdAt)) + '</time></div>';
               }).join('')
             : '<p class="small muted" style="margin:auto;text-align:center;max-width:32ch">' +
-              'No messages yet. Say which item you are writing about and give the CLF code.</p>') +
+              'No messages yet. Say which item you are writing about and give the L2F code.</p>') +
         '</div>' +
         '<form class="compose" id="sendForm">' +
           '<input id="msgIn" class="input" placeholder="Write a message" autocomplete="off">' +
