@@ -491,6 +491,11 @@ var $ = function (id) { return document.getElementById(id); };
 var state = { token: null, me: null, route: 'home', verifyToken: null, thread: null, photo: null };
 var SPIN = '<div class="loading"><span class="spinner load-dot"></span></div>';
 
+/* Your Apps Script web app's /exec URL. Deployment must have
+   "Who has access: Anyone", or every call below gets a sign-in
+   page back instead of JSON. */
+var APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx8UqI684-HVC8eZWCkCKeNFaYrgJM5PbYSNH-WRXoAktdNKSUqGxgFNTF30O0VYSLL/exec";
+
 function esc(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
     return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
@@ -537,23 +542,46 @@ document.addEventListener('keydown', function (e) { if (e.key === 'Escape') clos
 function rpc(action, payload) {
   payload = payload || {};
   if (state.token) payload.token = state.token;
-  return new Promise(function (resolve, reject) {
-    if (typeof google === 'undefined' || !google.script || !google.script.run) {
-      reject(new Error('Open this page from the Apps Script web app URL.'));
-      return;
-    }
-    google.script.run
-      .withSuccessHandler(function (res) {
-        if (!res) return reject(new Error('No response from the server.'));
-        if (res.ok) return resolve(res.data);
-        if (/session|sign in/i.test(res.error) && state.token) signOut(true);
-        reject(new Error(res.error));
-      })
-      .withFailureHandler(function (err) {
-        reject(new Error(err && err.message ? err.message : 'Network problem. Try again.'));
-      })
-      .rpc(action, payload);
-  });
+
+  /* Opened directly from the Apps Script /exec URL: use the fast, built-in
+     bridge. This still works if you ever host Index.html from Apps Script. */
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    return new Promise(function (resolve, reject) {
+      google.script.run
+        .withSuccessHandler(function (res) { settleRpc(res, resolve, reject); })
+        .withFailureHandler(function (err) {
+          reject(new Error(err && err.message ? err.message : 'Network problem. Try again.'));
+        })
+        .rpc(action, payload);
+    });
+  }
+
+  /* Hosted elsewhere, e.g. Vercel: call the script as a plain JSON API.
+     text/plain keeps this a "simple request" so the browser sends it
+     straight through — Apps Script has no OPTIONS handler, so a preflight
+     would fail. Don't add custom headers here. */
+  return fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action: action, payload: payload })
+  })
+    .catch(function () {
+      throw new Error('Could not reach the server. Check your connection and the script URL.');
+    })
+    .then(function (r) {
+      if (!r.ok) throw new Error('Server error (' + r.status + ').');
+      return r.json();
+    })
+    .then(function (res) {
+      return new Promise(function (resolve, reject) { settleRpc(res, resolve, reject); });
+    });
+}
+
+function settleRpc(res, resolve, reject) {
+  if (!res) return reject(new Error('No response from the server.'));
+  if (res.ok) return resolve(res.data);
+  if (/session|sign in/i.test(res.error) && state.token) signOut(true);
+  reject(new Error(res.error));
 }
 
 function niceDate(iso) {
